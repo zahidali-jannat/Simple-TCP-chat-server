@@ -42,7 +42,7 @@ def handle(client):
             broadcast(message)
 
         except:
-            # ❗ sirf check karo, double delete avoid karo
+         
             with lock:
                 if client in client_socket:
                     nickname = client_socket[client]
