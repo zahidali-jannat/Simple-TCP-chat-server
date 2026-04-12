@@ -1,6 +1,6 @@
 import threading
 import socket
-
+from Admin import kick_user , is_admin
 host='127.0.0.1'                                # Local host 
 port=55555
 
@@ -39,7 +39,7 @@ def handle(client):
 
             if not message:
                 break
-
+            
             broadcast(message)
 
         except:
@@ -70,7 +70,6 @@ def receive():
             if admin_client is None:
 
                 admin_client=client
-                check_admin_added=True
                 broadcast(f"{nickname} Admin Joined the chat !!!!! ".encode('ascii'))
                 broadcast("Admin joined the chat Be caution before typing !!!!! ".encode('ascii'))
             else:
@@ -86,33 +85,35 @@ def receive():
         thread=threading.Thread(target=handle, args=(client, ))
         thread.start()
 
-def kick_user(username):
-    with lock:
-        for client , name in list(client_socket.items()):
-            if name==username:
-                client.send("You were kicked by the server!".encode('ascii'))
-                client.close()
-                if client in clients:
-                    index = clients.index(client)
-                    clients.remove(client)
-                    nicknames.pop(index)
+# def kick_user(username):
+#     with lock:
+#         for client , name in list(client_socket.items()):
+#             if name==username:
+#                 client.send("You were kicked by the server!".encode('ascii'))
+#                 client.close()
+#                 if client in clients:
+#                     index = clients.index(client)
+#                     clients.remove(client)
+#                     nicknames.pop(index)
 
-                del client_socket[client]
+#                 del client_socket[client]
 
-                broadcast(f"{username} was kicked".encode('ascii'))
-                print(f"{username} kicked successfully")
-                return 
-        print("User not found")    
-def server_commands(): 
-    while True:
-        cmd=input()
-        if cmd.startswith("kick"):
-            parts=cmd.split()
+#                 broadcast(f"{username} was kicked".encode('ascii'))
+#                 print(f"{username} kicked successfully")
+#                 return 
+#         print("User not found")    
+# def server_commands(): 
+#     while True:
+#         cmd=input()
+#         if cmd.startswith("kick"):
+#             parts=cmd.split()
 
-            if len(parts) > 1:
-                username=parts[1]
-                kick_user(username)    
-threading.Thread(target=server_commands, daemon=True).start()                       
+#             if len(parts) > 1:
+#                 username=parts[1]
+#                 kick_user(username)  
+  
+# threading.Thread(target=server_commands, daemon=True).start() 
+                      
 print("Server is listening to client......... ")
 
 receive()        
