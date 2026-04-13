@@ -22,34 +22,53 @@ client_socket={}
                                                   #Broad cast function is the most simple function which sends  messages  to those clients 
                                                   # which are connected to the server right now 
 def broadcast(message):
-    for client in list(client_socket):
-        try:
-            client.send(message)
-        except:
-            print("Client disconnected unexpectedly")   
-            if client in client_socket:
-                del client_socket[client] 
-            client.close()
+    with lock: 
+        for client in list(client_socket):
+            try:
+                client.send(message)
+            except:
+                print("Client disconnected unexpectedly")
+
+                client_socket.pop(client, None)  
+                try:
+                    client.close()
+                except:
+                    pass
 
                                                   # Next part handle client connection with server 
 def handle(client):
     while True:
         try:
-            message = client.recv(1024)
+            message = client.recv(1024).decode()
 
             if not message:
                 break
-            
-            broadcast(message)
+            if client==admin_client: # he is admin 
+                if message.startswith("/kick"):
+                    parts=message.split()
+                    if len(parts)>1:
+                        target=parts[1]
+                        kick_user(target , client , client_socket , admin_client , lock , broadcast)
+                        # broadcast(f"Admin has kicked the {target}".encode())   
+                    
+                else:
+                    broadcast(f" Admin : {message} ".encode('ascii'))  
+            else:
+                if message.startswith("/kick"):
+                    client.send("You cannot kick any one".encode('ascii'))
+                else:
+                 
+                    broadcast(f"{client_socket[client]}: {message}".encode('ascii'))            
 
         except:
-         
+            nickname=None
             with lock:
                 if client in client_socket:
                     nickname = client_socket[client]
                     del client_socket[client]
 
-                    broadcast(f"{nickname} left the chat".encode())
+            if nickname:
+                broadcast(f"{nickname} left the chat".encode())
 
             client.close()
             break         
@@ -70,14 +89,13 @@ def receive():
             if admin_client is None:
 
                 admin_client=client
-                broadcast(f"{nickname} Admin Joined the chat !!!!! ".encode('ascii'))
-                broadcast("Admin joined the chat Be caution before typing !!!!! ".encode('ascii'))
+                broadcast(f" {nickname} Admin Joined the chat !!!!! ".encode('ascii'))
             else:
                  client.send("Admin already added".encode('ascii'))
                  client.close()
-                 continue       
+                 continue 
         else:
-
+            
             print(f"Nickaname of the client is {client_socket[client]}")
             broadcast(f"{client_socket[client]} joined the chat ".encode('ascii'))
             client.send("Connected to the server".encode('ascii'))
